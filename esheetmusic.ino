@@ -9,6 +9,18 @@
 unsigned char* image = nullptr;
 const size_t page_size = 81600;
 
+
+/*
+---------------------TODO--------------------
+* Double click to jump to next or previous song
+* Switch to song when removing SD card on sleep mode
+* 
+
+
+---------------------------------------------
+*/
+
+
 enum class PageLoadStatus {
   Loaded,
   LoadFailed
@@ -25,7 +37,7 @@ PageLoadStatus loadMusicImage(uint8_t& currentPage) {
   }
   file.read(image, page_size);
   file.close();
-  
+
   SPI.endTransaction();
   Serial.println("Image loaded into C-style array successfully.");
   return PageLoadStatus::Loaded;
@@ -34,13 +46,13 @@ PageLoadStatus loadMusicImage(uint8_t& currentPage) {
 void renderPage(bool& sleepMode, uint8_t& currentPage) {
   // display.setFullWindow();
 
-  display.setPartialWindow(0, 0, 960, 680); // Set a a window the size of the full display,
-  display.setRotation(2);                   // but with partial refresh enabled.
+  display.setPartialWindow(0, 0, 960, 680);  // Set a a window the size of the full display,
+  display.setRotation(2);                    // but with partial refresh enabled.
   display.firstPage();
   do {
     if (sleepMode) {
       display.fillScreen(GxEPD_WHITE);
-      continue; 
+      continue;
     }
     display.drawXBitmap(0, 0, image, 960, 680, GxEPD_BLACK);
   } while (display.nextPage());
@@ -56,7 +68,7 @@ void toggleSleep(bool& sleepMode) {
     } while (display.nextPage());
     display.hibernate();
   } else {
-    display.init(115200); // Initialize the display again
+    display.init(115200);  // Initialize the display again
   }
 }
 
@@ -77,18 +89,19 @@ void turnPageLeft(uint8_t& currentPage) {
 }
 
 void waitForButtonPress(bool& sleepMode, uint8_t& currentPage) {
+  Serial.println(digitalRead(A4));
   while (1) {
-    if (digitalRead(A5) == HIGH) { 
+    if (digitalRead(A5) == LOW) {
       delay(50);
       toggleSleep(sleepMode);
-      return; 
-    } 
-    if (digitalRead(A4) == HIGH) {
-      delay(50); 
+      return;
+    }
+    if (digitalRead(A4) == LOW) {
+      delay(50);
       turnPageLeft(currentPage);
       return;
     }
-    if (digitalRead(A3) == HIGH) {
+    if (digitalRead(A3) == LOW) {
       delay(50);
       turnPageRight(currentPage);
       return;
@@ -101,15 +114,15 @@ void setup() {
   uint8_t initialPage = 0;
 
   // Buttons
-  pinMode(A5, INPUT); //ToggleSleep
-  pinMode(A4, INPUT); //PageLeft
-  pinMode(A3, INPUT); //PageRight
+  pinMode(A5, INPUT);  //ToggleSleep
+  pinMode(A4, INPUT);  //PageLeft
+  pinMode(A3, INPUT);  //PageRight
 
   Serial.begin(115200);
-  display.init(115200); // Initialize the display
+  display.init(115200);  // Initialize the display
 
   Serial.println("Mounting SD...");
-  SPI.begin(18, 19, 23, 4); 
+  SPI.begin(18, 19, 23, 4);
   if (SD.begin(4)) {
     Serial.println("SD OK.");
   }
